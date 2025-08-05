@@ -1,0 +1,13 @@
+Django==5.2.1
+djangorestframework
+openai==1.79.0
+drf-yasg==1.21.10
+djangorestframework_simplejwt==5.5.0
+gunicorn==23.0.0
+uvicorn[standard]
+celery
+redis
+django-celery-beat
+flower
+psycopg2-binary
+psycopg[binary]
