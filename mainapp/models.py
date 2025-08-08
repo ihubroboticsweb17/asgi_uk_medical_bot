@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from bed_data.models import RoomDataModel, BedDataModel
 
 class HealthcareUser(AbstractUser):
     ROLE_CHOICES = (
@@ -24,8 +25,22 @@ class HealthcareUser(AbstractUser):
 class Patient(models.Model):
     patient_id = models.PositiveIntegerField(unique=True)
     name = models.CharField(max_length=255)
-    room_id = models.IntegerField()
-    bed_id = models.IntegerField()
+
+    room = models.ForeignKey(
+        RoomDataModel,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='patients'
+    )
+    bed = models.ForeignKey(
+        BedDataModel,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='patients'
+    )
+
+    # room_id = models.IntegerField()
+    # bed_id = models.IntegerField()
     gender = models.CharField(max_length=100)
     age = models.PositiveIntegerField()
     is_active = models.BooleanField(default=True)
@@ -46,7 +61,9 @@ class Patient(models.Model):
     )
 
     def __str__(self):
-        return f"{self.name} -in room {self.room_id} - in bed {self.bed_id}"
+        room_name = self.room.room_name if self.room else "No Room"
+        bed_name = self.bed.bed_name if self.bed else "No Bed"
+        return f"{self.name} - in room {room_name} - in bed {bed_name}"
 
 # GENDER_CHOICES = [
 #     ('Male', 'Male'),
