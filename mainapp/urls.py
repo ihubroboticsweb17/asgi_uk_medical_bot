@@ -15,5 +15,6 @@ urlpatterns = [
     path('view-all-patient/', view_all_patient, name='view every patient data'),
     path('delete-patient/<int:patient_id>/', soft_delete_patient, name='view every patient data'),
     path('delete-all-patient/', delete_all_patient, name='delete all patient data'),
-    
+    # Edit room and bet assigned for patient
+    path('reassign-bed-room/', reassign_designation, name='change bed or room designation'),   
 ]

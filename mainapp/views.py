@@ -15,7 +15,7 @@ from .serializers import HealthcareUserSerializer, PatientSerializer, LoginSeria
 import logging
 from privilagecontroller.views import hasFeatureAccess
 logger = logging.getLogger(__name__)
-
+from bed_data.serializer import PatientRoomBedUpdateSerializer
 # if not has_feature_access(request.user, 'view_admin_panel'):
 #         return Response({'detail': 'Access Denied'}, status=403)
 
@@ -312,3 +312,44 @@ def delete_all_patient(request):
             'message': 'Internal server error.',
             'data': None
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(["POST"])
+def reassign_designation(request):
+    room_id = request.data.get('room_id')
+    bed_id = request.data.get('bed_id')
+    patient_id = request.data.get('patient_id')
+
+    if request.user.role not in ['admin', 'nurse']:
+            return Response({
+                'status': 'error',
+                'message': 'Permission denied.',
+                'data': None
+            }, status=status.HTTP_403_FORBIDDEN)
+    
+    if not hasFeatureAccess(request.user, 'reassigning_patient'):
+        return Response({
+            'status': 'error',
+            'message': 'Permission denied.',
+            'data': None
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    has_patient = Patient.objects.filter(patient_id=patient_id).exists()
+    if not has_patient:
+        return Response({
+            'status': 'error',
+            'message': 'Select patient to reassign.',
+            'data': None
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    if room_id is None and bed_id is None:
+        return Response({
+            'status': 'error',
+            'message': 'Select either room or bed to reassign.',
+            'data': None
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = PatientRoomBedUpdateSerializer(patient_id, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save(updated_by=request.user)
+        return Response({"message": "Room/Bed updated successfully"})
+    return Response(serializer.errors, status=400)
