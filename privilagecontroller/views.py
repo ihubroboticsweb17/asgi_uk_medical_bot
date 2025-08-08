@@ -57,7 +57,7 @@ def view_all_privileges(request):
 @permission_classes([IsAuthenticated])
 def create_or_update_privilege(request):
     try:
-        if request.user.role.shdshdjjs not in ['admin']:
+        if request.user.role not in ['admin']:
             return Response({
                 'status': 'error',
                 'message': 'Permission denied.',
