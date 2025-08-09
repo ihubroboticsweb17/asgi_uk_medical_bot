@@ -5,50 +5,41 @@ from rest_framework import status
 from .models import PatientRoundSchedule
 from .serializers import PatientRoundScheduleSerializer
 from mainapp.models import Patient
+from django.shortcuts import get_object_or_404
+from privilagecontroller.views import hasFeatureAccess
 
-@api_view(['POST'])
+@api_view(['POST', 'PUT'])
 @permission_classes([IsAuthenticated])
-def create_or_update_scheduler(request):
-    serializer = PatientRoundScheduleSerializer(data=request.data)
+def create_or_update_round_schedule(request, pk=None):
+    
+    if request.user.role not in ['admin', 'nurse']:
+            return Response({'status': 'error', 'message': 'Permission denied.', 'data': None}, status=status.HTTP_403_FORBIDDEN)
+
+    if not hasFeatureAccess(request.user, 'round_schedule_crud'):
+        return Response({'status': 'error', 'message': 'Permission denied.', 'data': None}, status=status.HTTP_403_FORBIDDEN)
+
+    if pk:  # Update flow
+        instance = get_object_or_404(PatientRoundSchedule, pk=pk)
+        serializer = PatientRoundScheduleSerializer(instance, data=request.data, partial=True)
+    else:   # Create flow
+        serializer = PatientRoundScheduleSerializer(data=request.data)
 
     if serializer.is_valid():
-        patient = serializer.validated_data['patient']
-        time_slot = serializer.validated_data['time_slot']
+        if pk:
+            serializer.save(updated_by=request.user)
+        else:
+            serializer.save(created_by=request.user)
 
-        # Days list to check
-        days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
-        for day in days:
-            if serializer.validated_data.get(day):
-                filter_kwargs = {
-                    'patient': patient,
-                    'time_slot': time_slot,
-                    day: True
-                }
-                # Check if record exists for same patient + time slot + day
-                existing_schedule = PatientRoundSchedule.objects.filter(**filter_kwargs).first()
-                if existing_schedule:
-                    # Update existing schedule
-                    for field, value in serializer.validated_data.items():
-                        setattr(existing_schedule, field, value)
-                    existing_schedule.save()
-                    return Response({
-                        'status': 'success',
-                        'message': f"Schedule updated successfully for {day}",
-                        'data': PatientRoundScheduleSerializer(existing_schedule).data
-                    }, status=status.HTTP_200_OK)
-
-        # If no existing schedule found for any day → create new
-        schedule = serializer.save(created_by=request.user)
         return Response({
             'status': 'success',
-            'message': 'Schedule created successfully',
-            'data': PatientRoundScheduleSerializer(schedule).data
-        }, status=status.HTTP_201_CREATED)
+            'message': 'Patient round schedule saved successfully.',
+            'data': serializer.data
+        }, status=status.HTTP_200_OK if pk else status.HTTP_201_CREATED)
 
     return Response({
         'status': 'error',
-        'message': serializer.errors
+        'message': 'Invalid data.',
+        'errors': serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])

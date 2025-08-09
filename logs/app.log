@@ -602,3 +602,16 @@ Traceback (most recent call last):
     raise TypeError("Cannot filter against a non-conditional expression.")
 TypeError: Cannot filter against a non-conditional expression.
 [2025-08-09 12:07:01,222] WARNING django.request - Not Found: /favicon.ico
+[2025-08-09 12:42:29,946] WARNING django.request - Unauthorized: /schedule/view-patient-scheduled-rounds/19/
+[2025-08-09 12:52:12,149] WARNING django.request - Unauthorized: /schedule/create-scheduled-rounds/
+[2025-08-09 12:52:27,464] WARNING django.request - Unauthorized: /schedule/create-scheduled-rounds/
+[2025-08-09 12:53:02,400] WARNING django.request - Bad Request: /schedule/create-scheduled-rounds/
+[2025-08-09 12:53:55,299] WARNING django.request - Bad Request: /schedule/create-scheduled-rounds/
+[2025-08-09 13:02:00,826] WARNING django.request - Unauthorized: /schedule/create-scheduled-rounds/
+[2025-08-09 13:04:51,159] WARNING django.request - Unauthorized: /schedule/create-scheduled-rounds/
+[2025-08-09 13:05:03,580] WARNING django.request - Bad Request: /schedule/create-scheduled-rounds/
+[2025-08-09 13:06:11,138] WARNING django.request - Forbidden: /schedule/create-scheduled-rounds/
+[2025-08-09 13:06:12,219] WARNING django.request - Forbidden: /schedule/create-scheduled-rounds/
+[2025-08-09 13:06:13,050] WARNING django.request - Forbidden: /schedule/create-scheduled-rounds/
+[2025-08-09 13:06:13,588] WARNING django.request - Forbidden: /schedule/create-scheduled-rounds/
+[2025-08-09 13:07:29,635] WARNING django.request - Bad Request: /schedule/create-scheduled-rounds/
