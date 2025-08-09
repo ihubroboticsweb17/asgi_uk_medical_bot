@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import HealthcareUser, Patient
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
+from bed_data.models import BedDataModel, RoomDataModel
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -70,6 +71,14 @@ class HealthcareUserSerializer(serializers.ModelSerializer):
         return user
 
 class PatientSerializer(serializers.ModelSerializer):
+
+    room_id = serializers.PrimaryKeyRelatedField(
+        source='room', queryset=RoomDataModel.objects.all(), write_only=True
+    )
+    bed_id = serializers.PrimaryKeyRelatedField(
+        source='bed', queryset=BedDataModel.objects.all(), write_only=True
+    )
+
     class Meta:
         model = Patient
         fields = [

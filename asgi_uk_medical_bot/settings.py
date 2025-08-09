@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'mainapp',
     'privilagecontroller',
-    'bed_data'
+    'bed_data',
+    'schedule_rounds'
 ]
 
 MIDDLEWARE = [

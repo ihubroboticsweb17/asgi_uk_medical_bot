@@ -1,5 +1,5 @@
 sudo touch urls.py - to create a new file.
-sudo chown -R ashwin:ashwin ~/Documents/asgi_uk_medical_bot/bed_data  ===== to change the permission to user
+sudo chown -R ashwin:ashwin ~/Documents/dockered_projects/asgi_uk_medical_bot/bed_data  ===== to change the permission to user
 use this to makemigrations
 docker compose run --rm beat python manage.py makemigrations
 docker compose run --rm beat python manage.py makemigrations --empty mainapp
@@ -10,3 +10,6 @@ docker builder prune -a
 docker system prune -a --volumes
 docker stop $(docker ps -q) =====Stop all running containers
 docker rm $(docker ps -aq)  ===== Remove all containers
+
+
+/home/ashwin/Documents/dockered_projects/asgi_uk_medical_bot/schedule_rounds

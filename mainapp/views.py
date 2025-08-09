@@ -16,6 +16,8 @@ import logging
 from privilagecontroller.views import hasFeatureAccess
 logger = logging.getLogger(__name__)
 from bed_data.serializer import PatientRoomBedUpdateSerializer
+from schedule_rounds.models import PatientRoundSchedule
+from django.db import transaction
 # if not has_feature_access(request.user, 'view_admin_panel'):
 #         return Response({'detail': 'Access Denied'}, status=403)
 
@@ -152,10 +154,6 @@ def soft_delete_admin_user(request, user_id):
             'message': 'Internal server error.',
             'data': None
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-
-
-
 
 # Patient functions
 @api_view(['POST'])
@@ -176,44 +174,101 @@ def create_or_update_patient_data(request):
                 'message': 'Permission denied.',
                 'data': None
             }, status=status.HTTP_403_FORBIDDEN)
-
         patient_id = request.data.get('id')
-
+        room_id = request.data.get('room_id')
+        bed_id = request.data.get('bed_id')
         if patient_id:
             try:
                 instance = Patient.objects.get(id=patient_id)
-            except PatientSerializer.DoesNotExist:
+            except Patient.DoesNotExist:
                 return Response({
                     'status': 'error',
                     'message': 'Patient not found.',
                     'data': None
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            serializer = PatientSerializer(instance, data=request.data, partial=True)
-            operation = "updated"
+            if instance.room_id != int(room_id) or instance.bed_id != int(bed_id):
+                bed_taken = Patient.objects.filter(
+                    room_id=room_id,
+                    bed_id=bed_id
+                ).exclude(id=patient_id).exists()
+
+                if bed_taken:
+                    error_msg = f"Bed no. {bed_id} in Room {room_id} already allocated."
+                    return Response({
+                        'status': 'error',
+                        'message': error_msg,
+                        'data': None
+                    }, status=status.HTTP_400_BAD_REQUEST)
         else:
-            serializer = PatientSerializer(data=request.data)
-            operation = "created"
-
-        if serializer.is_valid():
-            updated_instance = serializer.save(is_active=True)
+            bed_taken = Patient.objects.filter(
+                room_id=room_id,
+                bed_id=bed_id
+            ).exists()
+            if bed_taken:
+                error_msg = f"Bed no. {bed_id} in Room {room_id} already allocated."
+                return Response({
+                    'status': 'error',
+                    'message': error_msg,
+                    'data': None
+                }, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
             if patient_id:
-                updated_instance.updated_by = request.user
-            else:
-                updated_instance.created_by = request.user
-            updated_instance.save() 
-            return Response({
-                'status': 'success',
-                'message': f"Patient {operation} successfully.",
-                'data': serializer.data
-            }, status=status.HTTP_200_OK if patient_id else status.HTTP_201_CREATED)
+                try:
+                    instance = Patient.objects.get(id=patient_id)
+                except Patient.DoesNotExist:
+                    return Response({
+                        'status': 'error',
+                        'message': 'Patient not found.',
+                        'data': None
+                    }, status=status.HTTP_404_NOT_FOUND)
 
+                serializer = PatientSerializer(instance, data=request.data, partial=True)
+                operation = "updated"
+            else:
+                serializer = PatientSerializer(data=request.data)
+                operation = "created"
+            if serializer.is_valid():
+                updated_instance = serializer.save(
+                    is_active=True,
+                    updated_by=request.user if patient_id else None,
+                    created_by=request.user if not patient_id else None
+                )
+                updated_instance.save()
+                if not patient_id:
+                    default_times = {
+                        'morning': "06:00:00",
+                        'afternoon': "12:00:00",
+                        'evening': "18:00:00",
+                        'night': "23:59:59",
+                    }
+                    schedules = []
+                    for slot, _ in PatientRoundSchedule.TIME_SLOT_CHOICES:
+                        schedules.append(PatientRoundSchedule(
+                            patient=updated_instance,
+                            time_slot=slot,
+                            monday=False, tuesday=False, wednesday=False,
+                            thursday=False, friday=False, saturday=False, sunday=False,
+                            trigger_time=default_times[slot],  # default trigger time (you can adjust)
+                            created_by=request.user
+                        ))
+                    PatientRoundSchedule.objects.bulk_create(schedules)
+                return Response({
+                    'status': 'success',
+                    'message': f"Patient {operation} successfully.",
+                    'data': serializer.data
+                }, status=status.HTTP_200_OK if patient_id else status.HTTP_201_CREATED)
+            else:
+                return Response({
+                    'status': 'error',
+                    'message': "Something went wrong",
+                    'data': None
+                }, status=status.HTTP_400_BAD_REQUEST)
         return Response({
             'status': 'error',
             'message': 'Validation failed.',
             'data': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
     except Exception as e:
         logger.exception(f"Exception in create_or_update_patient_data: {e}")
         return Response({
