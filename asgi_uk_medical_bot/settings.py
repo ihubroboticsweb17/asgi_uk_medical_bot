@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -220,3 +221,10 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+CELERY_BEAT_SCHEDULE = {
+    'check-patient-schedule-every-minute' : {
+        'task': 'schedule_rounds.tasks.check_and_send_schedules',
+        'schedule': crontab()
+    }
+}

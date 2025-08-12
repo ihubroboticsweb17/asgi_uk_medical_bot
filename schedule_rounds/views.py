@@ -10,29 +10,26 @@ from privilagecontroller.views import hasFeatureAccess
 
 @api_view(['POST', 'PUT'])
 @permission_classes([IsAuthenticated])
-def create_or_update_round_schedule(request, pk=None):
+def update_round_schedule(request, pk):
     
     if request.user.role not in ['admin', 'nurse']:
             return Response({'status': 'error', 'message': 'Permission denied.', 'data': None}, status=status.HTTP_403_FORBIDDEN)
 
     if not hasFeatureAccess(request.user, 'round_schedule_crud'):
         return Response({'status': 'error', 'message': 'Permission denied.', 'data': None}, status=status.HTTP_403_FORBIDDEN)
+    
+    if pk is None:
+         return Response({'status': 'error', 'message': 'Required scheduler key.', 'data': None}, status=status.HTTP_400_BAD_REQUEST)
 
-    if pk:  # Update flow
-        instance = get_object_or_404(PatientRoundSchedule, pk=pk)
-        serializer = PatientRoundScheduleSerializer(instance, data=request.data, partial=True)
-    else:   # Create flow
-        serializer = PatientRoundScheduleSerializer(data=request.data)
+    instance = get_object_or_404(PatientRoundSchedule, pk=pk)
+    serializer = PatientRoundScheduleSerializer(instance, data=request.data, partial=True)
 
     if serializer.is_valid():
-        if pk:
-            serializer.save(updated_by=request.user)
-        else:
-            serializer.save(created_by=request.user)
+        serializer.save(updated_by=request.user)
 
         return Response({
             'status': 'success',
-            'message': 'Patient round schedule saved successfully.',
+            'message': 'Patient round schedule updated successfully.',
             'data': serializer.data
         }, status=status.HTTP_200_OK if pk else status.HTTP_201_CREATED)
 

@@ -61,6 +61,7 @@ services:
     depends_on:
       - redis
       - postgres
+      - celery
     restart: unless-stopped
     working_dir: /app
 
