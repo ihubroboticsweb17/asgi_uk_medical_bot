@@ -32,6 +32,7 @@ class PatientRoundSchedule(models.Model):
     trigger_time = models.TimeField()
 
     is_stopped = models.BooleanField(default=False)
+    is_notified = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(

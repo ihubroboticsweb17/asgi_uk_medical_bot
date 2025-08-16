@@ -50,3 +50,4 @@ TypeError: create_or_update_round_schedule() missing 1 required positional argum
 [2025-08-12 06:04:17,068] WARNING django.request - Unauthorized: /schedule/update-scheduled-rounds/16/
 [2025-08-12 06:04:33,083] WARNING django.request - Unsupported Media Type: /schedule/update-scheduled-rounds/16/
 [2025-08-12 06:12:06,739] WARNING django.request - Unauthorized: /schedule/update-scheduled-rounds/16/
+[2025-08-16 12:15:04,005] WARNING django.request - Not Found: /favicon.ico
